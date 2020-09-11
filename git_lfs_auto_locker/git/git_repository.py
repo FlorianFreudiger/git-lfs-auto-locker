@@ -58,8 +58,8 @@ class GitRepository:  # TODO Verify that we are indeed in a git repo (git rev-pa
 
     def lock_file(self, lock: str) -> None:  # TODO: Check json output if successful
         output = self._run_command(['lfs', 'lock', lock])
-        logging.debug("Locking path {} output: {}".format(lock, output))
+        logging.debug("Locking path %s output: %s", lock, output)
 
     def unlock_file(self, lock: str) -> None:
         output = self._run_command(['lfs', 'unlock', lock])
-        logging.debug("Unlocking path {} output: {}".format(lock, output))
+        logging.debug("Unlocking path %s output: %s", lock, output)

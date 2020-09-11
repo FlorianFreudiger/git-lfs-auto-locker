@@ -39,7 +39,7 @@ while True:
     else:
         cached = True
         cycle_index += 1
-    logging.debug("Checking git status and git lfs locks. Cached lfs check = {}".format(cached))
+    logging.debug("Checking git status and git lfs locks. Cached lfs check = %s", cached)
 
     git_repo.refresh_status()
     git_repo.refresh_lfs_locks(cached=cached)
@@ -61,25 +61,25 @@ while True:
         continue
 
     if blockingLocks:
-        logging.info("File that were locked by other people were modified: " + str(blockingLocks))
+        logging.info("File(s) that were locked by other people were modified: %s", blockingLocks)
         notificator.show_warning("You are modifying {} file(s) that were locked by other people!".format(len(blockingLocks))) #TODO: Show file(s)
         blockNotification_paths_showed = blockNotification_paths_showed | blockingLocks
 
     if missingLocks:
-        logging.info("Modified files that are not locked: " + str(missingLocks))
+        logging.debug("Modified files that are not locked: %s", missingLocks)
         for missingLock in missingLocks:
-            logging.debug("Locking " + missingLock)
+            logging.info("Locking %s", missingLock)
             git_repo.lock_file(missingLock)
         if Notification_ShowLockAndUnlock:
             notificator.show_info("Locked {} modified file(s)".format(len(missingLocks)))
 
     if unnecessaryLocks:
-        logging.info("Locked Files without modification: " + str(unnecessaryLocks))
+        logging.debug("Locked files without modification: %s", unnecessaryLocks)
         for unnecessaryLock in unnecessaryLocks:
-            logging.debug("Unlocking " + unnecessaryLock)
+            logging.info("Unlocking %s", unnecessaryLock)
             git_repo.unlock_file(unnecessaryLock)
         if Notification_ShowLockAndUnlock:
             notificator.show_info("Unlocked {} unmodified file(s)".format(len(unnecessaryLocks)))
 
-    logging.debug("Sleeping for {} seconds".format(refreshDelay))
+    logging.debug("Sleeping for %s seconds", refreshDelay)
     time.sleep(refreshDelay)
