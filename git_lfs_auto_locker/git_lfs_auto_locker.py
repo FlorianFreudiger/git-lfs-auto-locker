@@ -58,6 +58,7 @@ while True:
 
     if cached and (blockingLocks or missingLocks or unnecessaryLocks):
         logging.debug("Detected mismatch but used cached lfs locks, confirming by rerunning with real lookup..")
+        cycle_index = LfsCachedLocksRefresh
         continue
 
     if blockingLocks:
