@@ -12,16 +12,20 @@ class GitRepository:  # TODO Verify that we are indeed in a git repo (git rev-pa
         self.status_files = []
         self.lfs_locks = []
 
-    def _run_command(self, arguments: List[str]) -> str:
+    def _run_command(self, arguments: List[str], strip_output: bool = True) -> str:
         git_command = ['git']
         if self.path is not None and self.path != "":
             git_command.append('-C')
             git_command.append(self.path)
-
         git_command.extend(arguments)
 
         git_process = subprocess.run(git_command, stdout=subprocess.PIPE, check=True)
-        return git_process.stdout.decode('utf-8')
+        output = git_process.stdout.decode('utf-8')
+        if strip_output:
+            output = output.strip()
+
+        logging.debug("%s -> %s", git_command, output)
+        return output
 
     def refresh_status(self) -> None:
         """Refresh status of git repository via "git status", results will be saved to status_files"""
@@ -35,7 +39,8 @@ class GitRepository:  # TODO Verify that we are indeed in a git repo (git rev-pa
     def refresh_lfs_locks(self, cached: bool) -> None: # TODO: Process Server errors
         # While we could cache it ourselves, reducing process calls
         # using the cached flag has the benefit of potentially returning results of a more recent lookup another software made.
-        git_lfs_locks_output = self._run_command(['lfs', 'locks', '--json', '--cached'] if cached else ['lfs', 'locks', '--json'])
+        git_lfs_locks_output = self._run_command(['lfs', 'locks', '--json', '--cached'] if cached else
+                                                 ['lfs', 'locks', '--json'], strip_output=False)
         git_lfs_locks_json = json.loads(git_lfs_locks_output)
 
         self.lfs_locks = []
