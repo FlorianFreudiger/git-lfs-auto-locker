@@ -6,7 +6,7 @@ from typing import List
 from git import lfs_lock
 
 
-class GitRepository:  # TODO Verify that we are indeed in a git repo (git rev-parse --is-inside-work-tree or maybe find root via --git-dir)
+class GitRepository:
     def __init__(self, path: str = ""):
         self.path = path
         self.status_files = []
@@ -26,6 +26,19 @@ class GitRepository:  # TODO Verify that we are indeed in a git repo (git rev-pa
 
         logging.debug("%s -> %s", git_command, output)
         return output
+
+    def is_in_work_tree(self) -> bool:
+        logging.debug("Checking if in work tree")
+        output = self._run_command(['rev-parse', '--is-inside-work-tree'])
+        if output == "true":
+            logging.debug("In work tree")
+            return True
+        elif output == "false":
+            logging.error("Not in work tree (probably inside .git directory), please change path")
+            return False
+        else:
+            logging.error("Not in work tree, please change path")
+            return False
 
     def refresh_status(self) -> None:
         """Refresh status of git repository via "git status", results will be saved to status_files"""

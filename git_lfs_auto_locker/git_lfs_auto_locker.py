@@ -26,12 +26,15 @@ Notification_ShowLockAndUnlock = False
 
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO, filename="git_fls_auto_locker.log")
+logging.info("Starting GitLFS Auto-Locker")
 
-cycle_index = 1
 git_repo = git_repository.GitRepository(GitRepositoryPath)
+if not git_repo.is_in_work_tree():
+    raise RuntimeError("Not inside work tree of a git repo, move script or set path to inside work tree")
 notificator = WindowsToast()
 
 blockNotification_paths_showed = set()
+cycle_index = 1
 while True:
     if cycle_index >= LfsCachedLocksRefresh:
         cached = False
