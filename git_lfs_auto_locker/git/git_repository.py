@@ -40,6 +40,9 @@ class GitRepository:
             logging.error("Not in work tree, please change path")
             return False
 
+    def get_config_user_name(self) -> str:
+        return self._run_command(['config', 'user.name'])
+
     def refresh_status(self) -> None:
         """Refresh status of git repository via "git status", results will be saved to status_files"""
         output = self._run_command(['status', '--porcelain=1'])
