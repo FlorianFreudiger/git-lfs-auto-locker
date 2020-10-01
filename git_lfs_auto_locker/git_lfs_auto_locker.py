@@ -1,36 +1,46 @@
 import logging
 import time
+import argparse
 
 from git import lfs_lock
 from git import git_repository
 from notification.windows_toast import WindowsToast
-# TODO: Git repo as argument, use argparse since it can generate help
+
+logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO, filename="git_lfs_auto_locker.log")
+logging.info("Starting GitLFS Auto-Locker")
+
+argument_parser = argparse.ArgumentParser(description="Synchronize lfs locks to modified file list")
+argument_parser.add_argument("-C", metavar="<path>",
+                             help="Path to git repository instead of using current directory")
+argument_parser.add_argument("-u", "--user-name", metavar="<username>",
+                             help="Use custom name for comparison to lfs locks author names instead of name from git config")
+arguments = argument_parser.parse_args()
+logging.debug("Parsed argparse namespace: %s", arguments)
+
+GitRepositoryPath = arguments.C
+GitLfsLockName = arguments.user_name
+
 #### CONFIG #### #TODO: Config file
-# Path to git repository, leave empty "" if script is already in repository.
-GitRepositoryPath = "Path to your repository"
-
-# Exact owner name of your own locks returned by 'git lfs locks'
-GitLfsLockName = "Your name"
-
 # Interval in seconds in which this script compares git status with git lfs locks
 refreshDelay = 30
+
 # Every n-th cycle call a "real" lfs locks lookup, otherwise cached lookup will be used. Set to 1 to always refresh from server.
 # If a mismatch between locked and modified files is detected on a cached locks lookup, a real lookup always will be made to confirm this.
 LfsCachedLocksRefresh = 10
 
 # Whether to only show the file name or the relative git repository path which can be rather long (maybe a bit too long for a win10 toast)
 Notification_OnlyShowFilename = True
+
 # Show "Locked/Unlocked x files notification"
 Notification_ShowLockAndUnlock = False
 #### END OF CONFIG ####
 
-
-logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO, filename="git_fls_auto_locker.log")
-logging.info("Starting GitLFS Auto-Locker")
-
 git_repo = git_repository.GitRepository(GitRepositoryPath)
 if not git_repo.is_in_work_tree():
     raise RuntimeError("Not inside work tree of a git repo, move script or set path to inside work tree")
+if GitLfsLockName is None:
+    GitLfsLockName = git_repo.get_config_user_name()
+
 notificator = WindowsToast()
 
 blockNotification_paths_showed = set()
