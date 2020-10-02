@@ -5,6 +5,7 @@ import argparse
 from git import lfs_lock
 from git import git_repository
 from notification.windows_toast import WindowsToast
+from stop_condition.stop_after_program_exit import StopAfterProgramExit
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO, filename="git_lfs_auto_locker.log")
 logging.info("Starting GitLFS Auto-Locker")
@@ -14,11 +15,16 @@ argument_parser.add_argument("-C", metavar="<path>",
                              help="Path to git repository instead of using current directory")
 argument_parser.add_argument("-u", "--user-name", metavar="<username>",
                              help="Use custom name for comparison to lfs locks author names instead of name from git config")
+argument_parser.add_argument("-s", "--stop-after", metavar="<program name>",
+                             help="Stop if program name is not found in list of running processes")
 arguments = argument_parser.parse_args()
 logging.debug("Parsed argparse namespace: %s", arguments)
 
 GitRepositoryPath = arguments.C
 GitLfsLockName = arguments.user_name
+StopConditions = []
+if arguments.stop_after:
+    StopConditions.append(StopAfterProgramExit(arguments.stop_after))
 
 #### CONFIG #### #TODO: Config file
 # Interval in seconds in which this script compares git status with git lfs locks
@@ -95,5 +101,16 @@ while True:
         if Notification_ShowLockAndUnlock:
             notificator.show_info("Unlocked {} unmodified file(s)".format(len(unnecessaryLocks)))
 
+    should_stop_bool = False
+    for stop_condition in StopConditions:
+        if stop_condition.should_stop():
+            logging.debug("Stopping because of %s", stop_condition)
+            should_stop_bool = True
+            break
+    if should_stop_bool:
+        break
+
     logging.debug("Sleeping for %s seconds", refreshDelay)
     time.sleep(refreshDelay)
+
+logging.debug("Exiting GitLFS Auto-Locker")
