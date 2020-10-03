@@ -17,6 +17,8 @@ argument_parser.add_argument("-u", "--user-name", metavar="<username>",
                              help="Use custom name for comparison to lfs locks author names instead of name from git config")
 argument_parser.add_argument("-s", "--stop-after", metavar="<program name>",
                              help="Stop if program name is not found in list of running processes")
+argument_parser.add_argument("-lun", "--lock-untracked", action="store_true",
+                             help="Lock untracked files, if not supplied untracked files will be unlocked")
 arguments = argument_parser.parse_args()
 logging.debug("Parsed argparse namespace: %s", arguments)
 
@@ -25,6 +27,7 @@ GitLfsLockName = arguments.user_name
 StopConditions = []
 if arguments.stop_after:
     StopConditions.append(StopAfterProgramExit(arguments.stop_after))
+LockUntracked = arguments.lock_untracked
 
 #### CONFIG #### #TODO: Config file
 # Interval in seconds in which this script compares git status with git lfs locks
@@ -60,7 +63,7 @@ while True:
         cycle_index += 1
     logging.debug("Checking git status and git lfs locks. Cached lfs check = %s", cached)
 
-    git_repo.refresh_status()
+    git_repo.refresh_status(include_untracked_files=LockUntracked)
     git_repo.refresh_lfs_locks(cached=cached)
 
     gitStatusFiles_Set = set(git_repo.status_files)
